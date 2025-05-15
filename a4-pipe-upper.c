@@ -1,50 +1,50 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <string.h>
 #include <ctype.h>
-
-void to_uppercase(char *str) {
-    for (int i = 0; str[i] != '\0'; i++) {
-        str[i] = toupper(str[i]);
-    }
-}
+#include <string.h>
 
 int main() {
-    int fd[2];
-    int fd2[2];
-    char buf[10]; 
-    char buf1[10];
-    char buf3[10];
+    int fd1[2], fd2[2];
+    char input[50], output[50];
     pid_t x;
-
-    pipe(fd);
+   
+    pipe(fd1);
     pipe(fd2);
+   
     x = fork();
-
+   
     if (x == 0) {
-        close(fd[0]); 
-        write(fd[1], "five1", 6);
-        close(fd[1]);
-
-        close(fd2[1]);
-        read(fd2[0], buf3, sizeof(buf3)); 
-        printf("Modified msg: %s\n", buf3);
+        close(fd1[1]);
         close(fd2[0]);
-
-    } else {
-        close(fd[1]); 
-        read(fd[0], buf, sizeof(buf));
-        close(fd[0]);
-        printf("Read msg: %s\n", buf);
-
-        strcpy(buf1, buf); 
-        to_uppercase(buf1);
-
-        close(fd2[0]); 
-        write(fd2[1], buf1, strlen(buf1) + 1);
+       
+        read(fd1[0], input, sizeof(input));
+        close(fd1[0]);
+       
+    
+        for (int i = 0; input[i] != '\0'; i++) {
+            if (islower(input[i])) {
+                input[i] = toupper(input[i]);
+            }
+        }
+       
+        write(fd2[1], input, strlen(input) + 1);
         close(fd2[1]);
+    } else {
+        close(fd1[0]);
+        close(fd2[1]);
+       
+        printf("Enter a word: ");
+        scanf("%s", input);
+       
+        write(fd1[1], input, strlen(input) + 1);
+        close(fd1[1]);
+       
+        read(fd2[0], output, sizeof(output));
+        close(fd2[0]);
+       
+        printf("Modified word from child: %s\n", output);
     }
-
+   
     return 0;
 }
